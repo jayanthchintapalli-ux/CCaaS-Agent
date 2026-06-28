@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CCaaS Case Summary</title>
+    <style>
+      :root {
+        --bg: #f4f6f8;
+        --card: #ffffff;
+        --accent: #2563eb;
+        --border: #d8dee6;
+        --text: #1f2933;
+        --muted: #6b7280;
+      }
+      * { box-sizing: border-box; }
+      body {
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+      }
+      .wrap { max-width: 720px; margin: 0 auto; padding: 2rem 1rem; }
+      h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+      p.sub { color: var(--muted); margin-top: 0; }
+      .controls { display: flex; gap: 0.5rem; margin: 1.5rem 0; }
+      input {
+        flex: 1;
+        padding: 0.65rem 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 1rem;
+      }
+      button {
+        padding: 0.65rem 1.25rem;
+        border: none;
+        border-radius: 8px;
+        background: var(--accent);
+        color: #fff;
+        font-size: 1rem;
+        cursor: pointer;
+      }
+      button:disabled { opacity: 0.6; cursor: not-allowed; }
+      .panel {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-top: 1rem;
+      }
+      .panel h2 { font-size: 1.05rem; margin-top: 0; }
+      .field { margin-bottom: 0.9rem; }
+      .label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+        margin-bottom: 0.2rem;
+      }
+      ul { margin: 0.2rem 0; padding-left: 1.2rem; }
+      .badge {
+        display: inline-block;
+        padding: 0.15rem 0.6rem;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        background: #eef2ff;
+        color: var(--accent);
+      }
+      pre {
+        white-space: pre-wrap;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.85rem;
+        background: #f8fafc;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.75rem;
+      }
+      .error {
+        background: #fef2f2;
+        border-color: #fecaca;
+        color: #b91c1c;
+      }
+      .hidden { display: none; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>CCaaS Case Summary</h1>
+      <p class="sub">Enter a case ID to generate a structured summary.</p>
+
+      <div class="controls">
+        <input
+          id="caseId"
+          type="text"
+          placeholder="e.g. CASE-12345"
+          autocomplete="off"
+        />
+        <button id="summarizeBtn">Summarize</button>
+      </div>
+
+      <div id="status" class="panel hidden"></div>
+      <div id="result" class="panel hidden"></div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
