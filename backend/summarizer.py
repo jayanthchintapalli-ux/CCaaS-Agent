@@ -1,53 +1,19 @@
-"""Summarize a support conversation with the Anthropic Messages API."""
+"""Summarize a support conversation with the Google Gemini API (free tier)."""
 
 from __future__ import annotations
 
+import json
 import os
 from typing import Any
 
-import anthropic
+from google import genai
+from google.genai import types
 
-MODEL = "claude-sonnet-4-6"
+# gemini-2.0-flash is available on Google AI Studio's free tier.
+MODEL = "gemini-2.0-flash"
 
-# JSON schema for the structured summary. Structured outputs guarantee the
-# response parses cleanly into the fields the frontend renders.
-SUMMARY_SCHEMA: dict[str, Any] = {
-    "type": "object",
-    "properties": {
-        "issue": {
-            "type": "string",
-            "description": "What the customer's problem or request was.",
-        },
-        "actions_taken": {
-            "type": "array",
-            "items": {"type": "string"},
-            "description": "Concrete actions the agent took during the conversation.",
-        },
-        "resolution_status": {
-            "type": "string",
-            "enum": ["resolved", "pending", "escalated", "unresolved"],
-            "description": "Current state of the case.",
-        },
-        "sentiment": {
-            "type": "string",
-            "enum": ["positive", "neutral", "negative", "mixed"],
-            "description": "Overall customer sentiment by the end of the conversation.",
-        },
-        "follow_ups": {
-            "type": "array",
-            "items": {"type": "string"},
-            "description": "Outstanding follow-up items, if any.",
-        },
-    },
-    "required": [
-        "issue",
-        "actions_taken",
-        "resolution_status",
-        "sentiment",
-        "follow_ups",
-    ],
-    "additionalProperties": False,
-}
+_ALLOWED_STATUS = ["resolved", "pending", "escalated", "unresolved"]
+_ALLOWED_SENTIMENT = ["positive", "neutral", "negative", "mixed"]
 
 
 class SummarizationError(Exception):
@@ -86,6 +52,23 @@ def _readable(summary: dict[str, Any]) -> str:
     )
 
 
+def _build_prompt(transcript: str) -> str:
+    return (
+        "You are a contact-center analyst. Summarize the customer support "
+        "conversation below.\n\n"
+        "Return ONLY a JSON object with exactly these keys:\n"
+        '  - "issue": string — what the customer needed.\n'
+        '  - "actions_taken": array of strings — actions the agent took.\n'
+        '  - "resolution_status": one of '
+        f"{_ALLOWED_STATUS}.\n"
+        '  - "sentiment": one of '
+        f"{_ALLOWED_SENTIMENT}.\n"
+        '  - "follow_ups": array of strings — outstanding items (empty array if none).\n\n'
+        "Do not include any text outside the JSON object.\n\n"
+        f"Conversation transcript:\n{transcript}"
+    )
+
+
 def summarize(conversation: dict[str, Any]) -> dict[str, Any]:
     """Summarize a conversation, returning structured fields plus readable text.
 
@@ -102,46 +85,44 @@ def summarize(conversation: dict[str, Any]) -> dict[str, Any]:
     Raises:
         SummarizationError: missing API key, empty transcript, or API failure.
     """
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        raise SummarizationError("ANTHROPIC_API_KEY is not configured.")
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        raise SummarizationError("GEMINI_API_KEY is not configured.")
 
     transcript = _transcript(conversation)
     if not transcript:
         raise SummarizationError("Conversation has no messages to summarize.")
 
-    client = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY from the environment
-
-    prompt = (
-        "You are a contact-center analyst. Summarize the following customer "
-        "support conversation. Identify the customer's issue, the actions the "
-        "agent took, the resolution status, the customer's overall sentiment, "
-        "and any outstanding follow-ups.\n\n"
-        f"Conversation transcript:\n{transcript}"
-    )
+    client = genai.Client(api_key=api_key)
 
     try:
-        response = client.messages.create(
+        response = client.models.generate_content(
             model=MODEL,
-            max_tokens=1024,
-            messages=[{"role": "user", "content": prompt}],
-            output_config={
-                "format": {"type": "json_schema", "schema": SUMMARY_SCHEMA}
-            },
+            contents=_build_prompt(transcript),
+            config=types.GenerateContentConfig(
+                # Ask Gemini to emit pure JSON so it parses cleanly.
+                response_mime_type="application/json",
+                temperature=0,
+            ),
         )
-    except anthropic.APIError as exc:
-        raise SummarizationError(f"Anthropic API error: {exc}") from exc
+    except Exception as exc:  # google-genai raises various exception types
+        raise SummarizationError(f"Gemini API error: {exc}") from exc
 
-    # With output_config.format, the first text block is guaranteed valid JSON.
-    import json
-
-    text_block = next((b for b in response.content if b.type == "text"), None)
-    if text_block is None:
-        raise SummarizationError("Model returned no text content.")
+    raw = (response.text or "").strip()
+    if not raw:
+        raise SummarizationError("Model returned no content.")
 
     try:
-        summary = json.loads(text_block.text)
+        summary = json.loads(raw)
     except json.JSONDecodeError as exc:
         raise SummarizationError(f"Could not parse model output: {exc}") from exc
+
+    # Normalize: guarantee the expected keys/shapes the frontend renders.
+    summary.setdefault("issue", "")
+    summary.setdefault("actions_taken", [])
+    summary.setdefault("resolution_status", "unresolved")
+    summary.setdefault("sentiment", "neutral")
+    summary.setdefault("follow_ups", [])
 
     summary["text"] = _readable(summary)
     return summary
