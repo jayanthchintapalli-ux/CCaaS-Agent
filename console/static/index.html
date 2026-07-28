@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agent Console</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Login view -->
+    <div id="loginView" class="login-wrap">
+      <form class="login-card" id="loginForm">
+        <div class="brand">
+          <div class="logo">AC</div>
+          <div>
+            <h1>Agent Console</h1>
+            <div class="tag">Contact Center Operations</div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Email <span class="req">*</span></label>
+          <input id="loginEmail" type="email" placeholder="admin@example.com" autocomplete="username" />
+        </div>
+        <div class="field">
+          <label>Password <span class="req">*</span></label>
+          <input id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password" />
+        </div>
+        <button class="btn-primary" type="submit" style="width:100%; justify-content:center;">Sign in</button>
+        <p class="hint" style="margin-top:1rem;">
+          Demo: <b>admin@example.com</b> / <b>admin123</b>
+        </p>
+      </form>
+    </div>
+
+    <!-- App shell -->
+    <div id="appView" class="app hidden">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="logo">AC</div>
+          <div>
+            <h1 style="font-size:1rem;">Agent Console</h1>
+          </div>
+        </div>
+        <nav class="nav" id="nav">
+          <a data-route="dashboard"><span class="ico">▤</span> Dashboard</a>
+          <a data-route="campaigns"><span class="ico">📣</span> Campaigns</a>
+          <a data-route="agents"><span class="ico">🤖</span> Campaign Agents</a>
+          <a data-route="dial"><span class="ico">📞</span> Manual Dial</a>
+          <a data-route="cdr"><span class="ico">📄</span> CDR</a>
+          <a data-route="whatsapp"><span class="ico">💬</span> WhatsApp</a>
+          <span class="sep" data-admin>Administration</span>
+          <a data-route="admin" data-admin><span class="ico">👥</span> Users</a>
+        </nav>
+        <div class="who">
+          <div class="name" id="whoName">—</div>
+          <div class="role" id="whoRole">—</div>
+          <button class="btn-sm" id="logoutBtn">Sign out</button>
+        </div>
+      </aside>
+      <main class="main" id="main"></main>
+    </div>
+
+    <div id="modalRoot"></div>
+    <div class="toasts" id="toasts"></div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

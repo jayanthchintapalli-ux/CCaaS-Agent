@@ -14,6 +14,11 @@ The summary includes:
 
 Results are returned as structured JSON **plus** a readable text rendering.
 
+> **Looking for the operator app?** This repo also contains the
+> **[Agent Console](console/README.md)** — a full CCaaS operator console with
+> campaigns + CSV upload, a manual dialer, CDR, WhatsApp channels, dashboards,
+> and user administration. See [`console/README.md`](console/README.md).
+
 ## Project layout
 
 ```
